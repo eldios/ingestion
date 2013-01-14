@@ -17,7 +17,7 @@ COUCH_ID_BUILDER = lambda src, lname: "%s--%s"%((src,lname))
 # Set id to value of the first handle, disambiguated w source. Not sure if
 # a handle is guaranteed or on what scale it's unique.
 # FIXME it's looking like an id builder needs to be part of the profile
-COUCH_REC_ID_BUILDER = lambda src, rec: COUCH_ID_BUILDER(src,rec.get(u'handle',["nohandle"])[0].strip())
+COUCH_REC_ID_BUILDER = lambda src, rec: COUCH_ID_BUILDER(src,rec.get(u'handle',["nohandle"])[0].strip().replace(" ","__"))
 
 COUCH_AUTH_HEADER = { 'Authorization' : 'Basic ' + base64.encodestring(COUCH_DATABASE_USERNAME+":"+COUCH_DATABASE_PASSWORD) }
 
