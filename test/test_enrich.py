@@ -73,6 +73,22 @@ def test_shred4():
 
     assert json.loads(content) == EXPECTED
 
+def test_shred5():
+    "Shredding multiple keys"
+    INPUT = {
+        "p": "a,b,c",
+        "q": "d,e,f"
+    }
+    EXPECTED = {
+        "p": ["a","b","c"],
+        "q": ["d","e","f"]
+    }
+    url = server() + "shred?prop=p,q"
+    resp,content = H.request(url,"POST",body=json.dumps(INPUT),headers=CT_JSON)
+    assert str(resp.status).startswith("2")
+
+    assert json.loads(content) == EXPECTED
+
 def test_unshred1():
     "Valid unshredding"
 
@@ -368,7 +384,57 @@ def test_enrich_subject_cleanup():
     result = json.loads(content)
     assert result['subject'] == EXPECTED['subject']
 
+def test_enrich_type_cleanup():
+    "Test type normalization"
+    INPUT = {
+        "type" : ["Still Images","Text"]
+        }
+    EXPECTED = {
+        u'type' : [ "image", "text" ]
+        }
+
+    url = server() + "enrich-type"
+
+    resp,content = H.request(url,"POST",body=json.dumps(INPUT),headers=HEADERS)
+    assert str(resp.status).startswith("2")
+    result = json.loads(content)
+    assert result['type'] == EXPECTED['type']
     
+def test_enrich_format_cleanup():
+    "Test format normalization and removal of non IMT formats"
+    INPUT = {
+        "format" : ["Still Images","image/JPEG","audio","Images"]
+        }
+    EXPECTED = {
+        u'format' : [ "image/jpeg", "audio" ],
+        u'TBD_physicalformat' : ["Still Images", "Images"]
+        }
+
+    url = server() + "enrich-format"
+
+    resp,content = H.request(url,"POST",body=json.dumps(INPUT),headers=HEADERS)
+    assert str(resp.status).startswith("2")
+    result = json.loads(content)
+    assert result['format'] == EXPECTED['format']
+    assert result['TBD_physicalformat'] == EXPECTED['TBD_physicalformat']
+    
+def test_enrich_format_cleanup():
+    "Test format normalization and removal of non IMT formats with one format"
+    INPUT = {
+        "format" : "image/JPEG"
+        }
+    EXPECTED = {
+        u'format' : "image/jpeg"
+        }
+
+    url = server() + "enrich-format"
+
+    resp,content = H.request(url,"POST",body=json.dumps(INPUT),headers=HEADERS)
+    assert str(resp.status).startswith("2")
+    result = json.loads(content)
+    assert result['format'] == EXPECTED['format']
+    assert not 'TBD_physicalformat' in result.keys()
+
 
 if __name__ == "__main__":
     raise SystemExit("Use nosetests")
