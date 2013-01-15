@@ -30,7 +30,7 @@ def test_shred1():
     resp,content = H.request(url,"POST",body=json.dumps(INPUT),headers=CT_JSON)
     assert str(resp.status).startswith("2")
 
-    assert json.loads(content) == EXPECTED
+    assert json.loads(content) == EXPECTED, content
 
 def test_shred2():
     "Shredding of an unknown property"
@@ -43,7 +43,7 @@ def test_shred2():
     resp,content = H.request(url,"POST",body=json.dumps(INPUT),headers=CT_JSON)
     assert str(resp.status).startswith("2")
 
-    assert json.loads(content) == EXPECTED
+    assert json.loads(content) == EXPECTED, content
 
 def test_shred3():
     "Shredding with a non-default delimeter"
@@ -57,7 +57,7 @@ def test_shred3():
     resp,content = H.request(url,"POST",body=json.dumps(INPUT),headers=CT_JSON)
     assert str(resp.status).startswith("2")
 
-    assert json.loads(content) == EXPECTED
+    assert json.loads(content) == EXPECTED, content
 
 def test_shred4():
     "Shredding multiple fields"
@@ -71,7 +71,21 @@ def test_shred4():
     resp,content = H.request(url,"POST",body=json.dumps(INPUT),headers=CT_JSON)
     assert str(resp.status).startswith("2")
 
-    assert json.loads(content) == EXPECTED
+    assert json.loads(content) == EXPECTED, content
+
+def test_shred5():
+    "Shredding of nested structure"
+    INPUT = {
+        "p": {"q": "a,b,c" }
+    }
+    EXPECTED = {
+        "p": {"q": ["a","b","c"] }
+    }
+    url = server() + "shred?prop=p/q"
+    resp,content = H.request(url,"POST",body=json.dumps(INPUT),headers=CT_JSON)
+    assert str(resp.status).startswith("2")
+
+    assert json.loads(content) == EXPECTED, content
 
 def test_unshred1():
     "Valid unshredding"
@@ -88,7 +102,7 @@ def test_unshred1():
     resp,content = H.request(url,"POST",body=json.dumps(INPUT),headers=CT_JSON)
     assert str(resp.status).startswith("2")
 
-    assert json.loads(content) == EXPECTED
+    assert json.loads(content) == EXPECTED, content
 
 def test_unshred2():
     "Unshredding of an unknown property"
@@ -101,7 +115,7 @@ def test_unshred2():
     resp,content = H.request(url,"POST",body=json.dumps(INPUT),headers=CT_JSON)
     assert str(resp.status).startswith("2")
 
-    assert json.loads(content) == EXPECTED
+    assert json.loads(content) == EXPECTED, content
 
 def test_oaitodpla_subject_single():
     "Correctly map a single subject"
