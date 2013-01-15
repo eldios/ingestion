@@ -19,7 +19,8 @@ COUCH_ID_BUILDER = lambda src, lname: "--".join((src,lname))
 # FIXME it's looking like an id builder needs to be part of the profile. Or UUID as fallback?
 COUCH_REC_ID_BUILDER = lambda src, rec: COUCH_ID_BUILDER(src,rec.get(u'id','no-id').strip().replace(" ","__"))
 
-COUCH_AUTH_HEADER = { 'Authorization' : 'Basic ' + base64.encodestring(COUCH_DATABASE_USERNAME+":"+COUCH_DATABASE_PASSWORD) }
+if COUCH_DATABASE_USERNAME and COUCH_DATABASE_PASSWORD:
+    COUCH_AUTH_HEADER = { 'Authorization' : 'Basic ' + base64.encodestring(COUCH_DATABASE_USERNAME+":"+COUCH_DATABASE_PASSWORD) }
 
 # FIXME: this should be JSON-LD, but CouchDB doesn't support +json yet
 CT_JSON = {'Content-Type': 'application/json'}
@@ -47,7 +48,12 @@ def pipe(content,ctype,enrichments,wsgi_header):
 # FIXME: should be able to optionally skip the revision checks for initial ingest
 def couch_rev_check_coll(docuri,doc):
     'Add current revision to body so we can update it'
-    resp, cont = H.request(docuri,'GET',headers=COUCH_AUTH_HEADER)
+    if COUCH_AUTH_HEADER:
+        headers = COUCH_AUTH_HEADER
+    else:
+        headers = {}
+    
+    resp, cont = H.request(docuri,'GET',headers=headers)
     if str(resp.status).startswith('2'):
         doc['_rev'] = json.loads(cont)['_rev']
 
