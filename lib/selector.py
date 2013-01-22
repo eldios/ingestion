@@ -1,22 +1,28 @@
-import operator
 import copy
 
 PATH_DELIM = '/'
 
-def getprop(obj,path):
+def getprop(obj,path,keyErrorAsNone=False):
     """
     Returns the value of the key identified by interpreting
     the path as a delimited hierarchy of keys
     """
-    if '/' not in path: return obj[path]
+    if '/' not in path:
+        if keyErrorAsNone:
+            return obj.get(path)
+        else:
+            return obj[path]
 
     pp,pn = tuple(path.lstrip(PATH_DELIM).split(PATH_DELIM,1))
     if pp not in obj:
-        raise KeyError('Path not found in object: %s (%s)'%(path,pp))
+        if not keyErrorAsNone:
+            raise KeyError('Path not found in object: %s (%s)'%(path,pp))
+        else:
+            return None
 
-    return getprop(obj[pp],pn)
+    return getprop(obj[pp],pn,keyErrorAsNone)
 
-def setprop(obj,path,val):
+def setprop(obj,path,val,keyErrorAsNone=False):
     """
     Sets the value of the key identified by interpreting
     the path as a delimited hierarchy of keys
@@ -27,9 +33,12 @@ def setprop(obj,path,val):
 
     pp,pn = tuple(path.lstrip(PATH_DELIM).split(PATH_DELIM,1))
     if pp not in obj:
-        raise KeyError('Path not found in object: %s (%s)'%(path,pp))
+        if not keyErrorAsNone:
+            raise KeyError('Path not found in object: %s (%s)'%(path,pp))
+        else:
+            return None
 
-    return setprop(obj[pp],pn,val)
+    return setprop(obj[pp],pn,val,keyErrorAsNone)
 
 def exists(obj,path):
     """
@@ -37,7 +46,7 @@ def exists(obj,path):
     """
     found = False
     try:
-        found = getprop(obj,path) != None
+        found = getprop(obj,path,keyErrorAsNone=False) != None
     except KeyError:
         pass
 

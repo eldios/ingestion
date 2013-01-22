@@ -64,8 +64,8 @@ def couch_rev_check_recs(docs,src):
     uri = join(COUCH_DATABASE,'_all_docs')
     start = quote(COUCH_ID_BUILDER(src,''))
     end = quote(COUCH_ID_BUILDER(src,'Z'*100)) # FIXME. Is this correct?
-    uri += '?startkey=%s&endkey=%s'%(start,end)
-    resp, cont = H.request(join(COUCH_DATABASE,'_all_docs'),'GET',headers=COUCH_AUTH_HEADER)
+    uri += '?startkey="%s"&endkey="%s"'%(start,end)
+    resp, cont = H.request(uri,'GET',headers=COUCH_AUTH_HEADER)
     if str(resp.status).startswith('2'):
         rows = json.loads(cont)["rows"]
         #revs = { r["id"]:r["value"]["rev"] for r in rows } # 2.7 specific
