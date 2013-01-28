@@ -5,7 +5,8 @@ from akara.services import simple_service
 from amara.thirdparty import json
 from zen.akamod import geolookup_service
 
-GEOLOOKUP = geolookup_service()
+def GEOLOOKUP():
+    return geolookup_service()
 
 def lookup_place(p):
     lu = GEOLOOKUP(p)
