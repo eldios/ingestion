@@ -52,12 +52,15 @@ import datetime
 import uuid
 import base64
 
-# Configuration for accessing the database.
-COUCH_DATABASE = module_config().get('couch_database')
-COUCH_DATABASE_USERNAME = module_config().get('couch_database_username')
-COUCH_DATABASE_PASSWORD = module_config().get('couch_database_password')
 
-COUCH_AUTH_HEADER = { 'Authorization' : 'Basic ' + base64.encodestring(COUCH_DATABASE_USERNAME+":"+COUCH_DATABASE_PASSWORD) }
+def COUCH_DATABASE():
+    module_config().get('couch_database')
+
+def COUCH_AUTH_HEADER():
+    COUCH_DATABASE_USERNAME = module_config().get('couch_database_username')
+    COUCH_DATABASE_PASSWORD = module_config().get('couch_database_password')
+    return { 'Authorization' : 'Basic ' + base64.encodestring(COUCH_DATABASE_USERNAME+":"+COUCH_DATABASE_PASSWORD) }
+
 CT_JSON = {'Content-Type': 'application/json'}
 
 # The app name used for accessing the views.
@@ -85,8 +88,8 @@ def update_document(body, ctype):
     import httplib
     h = httplib2.Http()
     h.force_exception_as_status_code = True
-    url = join(COUCH_DATABASE, document_id)
-    resp, content = h.request(url, 'PUT', body=document, headers=COUCH_AUTH_HEADER)
+    url = join(COUCH_DATABASE(), document_id)
+    resp, content = h.request(url, 'PUT', body=document, headers=COUCH_AUTH_HEADER())
     if str(resp.status).startswith('2'):
         return content
     else:
@@ -105,14 +108,14 @@ def listrecords(limit=100):
     import httplib
     h = httplib2.Http()
     h.force_exception_as_status_code = True
-    url = join(COUCH_DATABASE, '_design', VIEW_APP, '_view', VIEW_NAME)
+    url = join(COUCH_DATABASE(), '_design', VIEW_APP, '_view', VIEW_NAME)
     url += '?limit=' + str(limit)
     logger.debug(url)
-    resp, content = h.request(url, "GET", headers=COUCH_AUTH_HEADER)
+    resp, content = h.request(url, "GET", headers=COUCH_AUTH_HEADER())
     logger.debug("Content: " + content)
     if str(resp.status).startswith('2'):
         return content
     else:
         logger.error("Couldn't get documents via: " + repr(resp))
-    
+
 

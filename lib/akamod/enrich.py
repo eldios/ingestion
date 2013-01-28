@@ -9,17 +9,19 @@ import datetime
 import uuid
 import base64
 
-COUCH_DATABASE = module_config().get('couch_database')
-COUCH_DATABASE_USERNAME = module_config().get('couch_database_username')
-COUCH_DATABASE_PASSWORD = module_config().get('couch_database_password')
+def COUCH_DATABASE():
+    module_config().get('couch_database')
+
+def COUCH_AUTH_HEADER():
+    COUCH_DATABASE_USERNAME = module_config().get('couch_database_username')
+    COUCH_DATABASE_PASSWORD = module_config().get('couch_database_password')
+    return { 'Authorization' : 'Basic ' + base64.encodestring(COUCH_DATABASE_USERNAME+":"+COUCH_DATABASE_PASSWORD) }
 
 COUCH_ID_BUILDER = lambda src, lname: "--".join((src,lname))
 # Set id to value of the first identifier, disambiguated w source. Not sure if
 # an OAI handle is guaranteed or on what scale it's unique.
 # FIXME it's looking like an id builder needs to be part of the profile. Or UUID as fallback?
 COUCH_REC_ID_BUILDER = lambda src, rec: COUCH_ID_BUILDER(src,rec.get(u'id','no-id').strip().replace(" ","__"))
-
-COUCH_AUTH_HEADER = { 'Authorization' : 'Basic ' + base64.encodestring(COUCH_DATABASE_USERNAME+":"+COUCH_DATABASE_PASSWORD) }
 
 # FIXME: this should be JSON-LD, but CouchDB doesn't support +json yet
 CT_JSON = {'Content-Type': 'application/json'}
@@ -47,7 +49,7 @@ def pipe(content,ctype,enrichments,wsgi_header):
 # FIXME: should be able to optionally skip the revision checks for initial ingest
 def couch_rev_check_coll(docuri,doc):
     'Add current revision to body so we can update it'
-    resp, cont = H.request(docuri,'GET',headers=COUCH_AUTH_HEADER)
+    resp, cont = H.request(docuri,'GET',headers=COUCH_AUTH_HEADER())
     if str(resp.status).startswith('2'):
         doc['_rev'] = json.loads(cont)['_rev']
 
@@ -56,11 +58,11 @@ def couch_rev_check_recs(docs,src):
     Insert revisions for all records into structure using CouchDB bulk interface.
     Uses key ranges to narrow bulk query to the source being ingested.
     '''
-    uri = join(COUCH_DATABASE,'_all_docs')
+    uri = join(COUCH_DATABASE(),'_all_docs')
     start = quote(COUCH_ID_BUILDER(src,''))
     end = quote(COUCH_ID_BUILDER(src,'Z'*100)) # FIXME. Is this correct?
     uri += '?startkey=%s&endkey=%s'%(start,end)
-    resp, cont = H.request(join(COUCH_DATABASE,'_all_docs'),'GET',headers=COUCH_AUTH_HEADER)
+    resp, cont = H.request(join(COUCH_DATABASE(),'_all_docs'),'GET',headers=COUCH_AUTH_HEADER())
     if str(resp.status).startswith('2'):
         rows = json.loads(cont)["rows"]
         #revs = { r["id"]:r["value"]["rev"] for r in rows } # 2.7 specific
@@ -111,10 +113,10 @@ def enrich(body,ctype):
     enriched_coll_text = pipe(COLL, ctype, coll_enrichments, 'HTTP_PIPELINE_COLL')
     enriched_collection = json.loads(enriched_coll_text)
     # FIXME. Integrate collection storage into bulk call below
-    if COUCH_DATABASE:
-        docuri = join(COUCH_DATABASE,cid)
+    if COUCH_DATABASE():
+        docuri = join(COUCH_DATABASE(),cid)
         couch_rev_check_coll(docuri,enriched_collection)
-        resp, cont = H.request(docuri,'PUT',body=json.dumps(enriched_collection),headers=dict(CT_JSON.items()+COUCH_AUTH_HEADER.items()))
+        resp, cont = H.request(docuri,'PUT',body=json.dumps(enriched_collection),headers=dict(CT_JSON.items()+COUCH_AUTH_HEADER().items()))
         if not str(resp.status).startswith('2'):
             logger.debug("Error storing collection in Couch: "+repr((resp,cont)))
 
@@ -144,8 +146,8 @@ def enrich(body,ctype):
 
     couch_rev_check_recs(docs,source_name)
     couch_docs_text = json.dumps({"docs":docs})
-    if COUCH_DATABASE:
-        resp, content = H.request(join(COUCH_DATABASE,'_bulk_docs'),'POST',body=couch_docs_text,headers=dict(CT_JSON.items()+COUCH_AUTH_HEADER.items()))
+    if COUCH_DATABASE():
+        resp, content = H.request(join(COUCH_DATABASE(),'_bulk_docs'),'POST',body=couch_docs_text,headers=dict(CT_JSON.items()+COUCH_AUTH_HEADER().items()))
         logger.debug("Couch bulk update response: "+content)
         if not str(resp.status).startswith('2'):
             logger.debug('HTTP error posting to CouchDB: '+repr((resp,content)))
