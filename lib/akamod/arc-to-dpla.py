@@ -132,7 +132,8 @@ def arc_group_extraction(d,groupKey,itemKey,nameKey=None):
         data = None
     else:
         # xmltodict converts what would be a list of length 1, into just that
-        # lone dict. could definitely benefit from being more examplotron-like here.
+        # lone dict. we have to deal with that twice here.
+        # could definitely benefit from being more examplotron-like.
         if isinstance(group,list):
             # FIXME we pick the first in the list. unlikely to be
             # optimal and possibly incorrect in some cases
@@ -140,11 +141,15 @@ def arc_group_extraction(d,groupKey,itemKey,nameKey=None):
         else:
             item = group
 
+        subitem = item.get(itemKey)
+        if isinstance(subitem,list):
+            subitem=subitem[0]
+
         if nameKey:
-            data = item.get(itemKey).get(nameKey,None)
+            data = subitem.get(nameKey,None)
         else:
             # we interpret no nameKey to mean that the value is a string and not a dict
-            data = item.get(itemKey)
+            data = subitem
 
     return data
 
