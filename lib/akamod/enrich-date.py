@@ -8,7 +8,7 @@ import timelib
 from zen import dateparser
 
 @simple_service('POST', 'http://purl.org/la/dp/enrich-date', 'enrich-date', 'application/json')
-def enrichformat(body,ctype,action="enrich-format",prop="date"):
+def enrichdate(body,ctype,action="enrich-format",prop="date"):
     '''   
     Service that accepts a JSON document and extracts the "created date" of the item, using the
     following rules:
@@ -19,7 +19,8 @@ def enrichformat(body,ctype,action="enrich-format",prop="date"):
 
     # default date used by dateutil-python to populate absent date elements during parse,
     # e.g. "1999" would become "1999-01-01" instead of using the current month/day
-    DEFAULT_DATETIME = dateutil_parse("2000-01-01") 
+    # Set this to a date far in the future, so we can use it to check if date parsing just failed
+    DEFAULT_DATETIME = dateutil_parse("3000-01-01") 
 
     DATE_RANGE_RE = r'(\S+)\s*-\s*(\S+)'
     def split_date(d):
@@ -42,20 +43,22 @@ def enrichformat(body,ctype,action="enrich-format",prop="date"):
         
         Returns None if it fails
         """
-        dd = None
-        try:
-            dd = dateutil_parse(d,fuzzy=True,default=DEFAULT_DATETIME)
-        except:
+        dd = dateparser.to_iso8601(d.replace('ca.','').strip()) # simple cleanup prior to parse
+        if dd is None:
             try:
-                dd = timelib.strtodatetime(d)
-            except ValueError:
-                pass
+                dd = dateutil_parse(d,fuzzy=True,default=DEFAULT_DATETIME)
+                if dd.year == DEFAULT_DATETIME.year:
+                    dd = None
+            except:
+                try:
+                    dd = timelib.strtodatetime(d)
+                except ValueError:
+                    pass
         
-        if dd:
-            ddiso = dd.isoformat()
-            return ddiso[:ddiso.index('T')]
-
-        return dateparser.to_iso8601(d.replace('ca.','').strip()) # simple cleanup prior to parse
+            if dd:
+                ddiso = dd.isoformat()
+                return ddiso[:ddiso.index('T')]
+        return dd
 
     def parse_date_or_range(d):
         if ' - ' in d: # FIXME could be more robust here, e.g. use year regex
@@ -66,14 +69,15 @@ def enrichformat(body,ctype,action="enrich-format",prop="date"):
         return a,b
 
     DATE_TESTS = {
-        "ca. July 1896": ("1896-07-01","1896-07-01"), # fuzzy dates
+        "ca. July 1896": ("1896-07","1896-07"), # fuzzy dates
         "1999.11.01": ("1999-11-01","1999-11-01"), # period delim
         "2012-02-31": ("2012-03-02","2012-03-02"), # invalid date cleanup
         "12-19-2010": ("2010-12-19","2010-12-19"), # M-D-Y
         "5/7/2012": ("2012-05-07","2012-05-07"), # slash delim MDY
-        "1999 - 2004": ("1999-01-01","2004-01-01"), # year range
-        " 1999   -   2004  ": ("1999-01-01","2004-01-01"), # range whitespace
+        "1999 - 2004": ("1999","2004"), # year range
+        " 1999   -   2004  ": ("1999","2004"), # range whitespace
         }
+
     def test_parse_date_or_range():
         for i in DATE_TESTS:
             res = parse_date_or_range(i)
@@ -89,12 +93,16 @@ def enrichformat(body,ctype,action="enrich-format",prop="date"):
     date_candidates = []
     for p in prop.split(','):
         if p in data:
+            date_candidates = []
             for s in (data[p] if not isinstance(data[p],basestring) else [data[p]]):
-                a,b = parse_date_or_range(t)
-                if a is not None and b is not None:
-                    date_candidates.append( {
-                            "start": a,
-                            "end": b
-                            })
+                a,b = parse_date_or_range(s)
+                date_candidates.append( {
+                        "start": a,
+                        "end": b,
+                        "displayDate" : s
+                        })
+        date_candidates.sort(key=lambda d: d["start"] if d["start"] is not None else "9999-12-31")
+        if len(date_candidates) > 0:
+            data[prop] = date_candidates[0]            
 
     return json.dumps(data)
