@@ -22,7 +22,7 @@ def shred(body,ctype,action="shred",prop=None,delim=','):
         response.add_header('content-type','text/plain')
         return "Unable to parse body as JSON"
 
-    for p in prop.split('.'):
+    for p in prop.split(','):
         if exists(data,p):
             v = getprop(data,p)
             if action == "shred":

@@ -78,27 +78,22 @@ def temporal_transform(d):
 
 def source_transform(d):
     source = ""
-    for s in d["handle"]:
-        if is_absolute(s):
-            source = s
-            break
+    if isinstance(d['handle'],basestring) and is_absolute(d['handle']):
+        source = d['handle']
+    else:
+        for s in d["handle"]:
+            if is_absolute(s):
+                source = s
+                break
     return {"source":source}
 
-def subject_transform(d):
-    subject = []
-    for s in (d["subject"] if not isinstance(d["subject"],basestring) else [d["subject"]]):
-        subject.append({
-            "name" : s.strip()
-        })
-    return {"subject" : subject}
 
 # Structure mapping the original property to a function returning a single
 # item dict representing the new property and its value
 TRANSFORMER = {
     "source"           : lambda d: {"contributor": d.get("source",None)},
     "original_record"  : lambda d: {"dplaSourceRecord": d.get("original_record",None)},
-    "datestamp"        : created_transform,
-    "date"             : temporal_transform,
+    "date"             : lambda d: {"created": d.get("date",None)},
     "coverage"         : spatial_transform,
     "title"            : lambda d: {"title": d.get("title",None)},
     "creator"          : lambda d: {"creator": d.get("creator",None)},
@@ -109,10 +104,11 @@ TRANSFORMER = {
     "rights"           : lambda d: {"rights": d.get("rights",None)},
     "collection"       : lambda d: {"isPartOf": d.get("collection",None)},
     "id"               : lambda d: {"id": d.get("id",None), "@id" : "http://dp.la/api/items/"+d.get("id","")},
-    "subject"          : subject_transform,
+    "subject"          : lambda d: {"subject": d.get("subject",None)},
     "handle"           : source_transform,
     "ingestType"       : lambda d: {"ingestType": d.get("ingestType",None)},
-    "ingestDate"       : lambda d: {"ingestDate": d.get("ingestDate",None)}
+    "ingestDate"       : lambda d: {"ingestDate": d.get("ingestDate",None)},
+    "_id"              : lambda d: {"_id": d.get("_id",None)}
 
     # language - needs a lookup table/service. TBD.
     # subject - needs additional LCSH enrichment. just names for now

@@ -17,7 +17,7 @@ COUCH_ID_BUILDER = lambda src, lname: "--".join((src,lname))
 # Set id to value of the first identifier, disambiguated w source. Not sure if
 # an OAI handle is guaranteed or on what scale it's unique.
 # FIXME it's looking like an id builder needs to be part of the profile. Or UUID as fallback?
-COUCH_REC_ID_BUILDER = lambda src, rec: COUCH_ID_BUILDER(src,rec.get(u'id','no-id').strip())
+COUCH_REC_ID_BUILDER = lambda src, rec: COUCH_ID_BUILDER(src,rec.get(u'id','no-id').strip().replace(" ","__"))
 
 if COUCH_DATABASE_USERNAME and COUCH_DATABASE_PASSWORD:
     COUCH_AUTH_HEADER = { 'Authorization' : 'Basic ' + base64.encodestring(COUCH_DATABASE_USERNAME+":"+COUCH_DATABASE_PASSWORD) }
@@ -36,6 +36,7 @@ def pipe(content,ctype,enrichments,wsgi_header):
         if len(uri) < 1: continue # in case there's no pipeline
         headers = copy_headers_to_dict(request.environ,exclude=[wsgi_header])
         headers['content-type'] = ctype
+        logger.debug("Calling url: %s " % uri)
         resp, cont = H.request(uri,'POST',body=body,headers=headers)
         if not str(resp.status).startswith('2'):
             logger.debug("Error in enrichment pipeline at %s: %s"%(uri,repr(resp)))
@@ -73,7 +74,7 @@ def couch_rev_check_recs(docs,src):
         for r in rows:
             revs[r["id"]] = r["value"]["rev"]
         for doc in docs:
-            id = doc['id']
+            id = doc['_id']
             if id in revs:
                 doc['_rev'] = revs[id]
     else:
@@ -134,15 +135,14 @@ def enrich(body,ctype):
             '@id' : at_id,
             'name' : enriched_collection.get('title',"")
         }
+        if 'description' in enriched_collection:
+            record[u'collection']['description'] = enriched_collection.get('description',"")
 
-        record[u'id'] = COUCH_REC_ID_BUILDER(source_name,record)
         record[u'ingestType'] = 'item'
         set_ingested_date(record)
 
         doc_text = pipe(record, ctype, rec_enrichments, 'HTTP_PIPELINE_REC')
         doc = json.loads(doc_text)
-        if 'id' in doc:
-            doc[u'_id'] = doc[u'id']
         docs.append(doc)
 
     couch_rev_check_recs(docs,source_name)
