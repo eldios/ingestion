@@ -110,7 +110,8 @@ def enrich(body,ctype):
     COLL = {
         "_id": cid,
         "@id": at_id,
-        "ingestType": "collection"
+        "ingestType": "collection",
+        "label": data.get("label",None)
     }
     set_ingested_date(COLL)
 
