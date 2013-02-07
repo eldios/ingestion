@@ -92,7 +92,7 @@ def process_arc_all(profile):
             item = ARC_PARSE(item_f)['archival-description']
 
             # set our generic identifier property
-            item['id'] = item['arc-id']
+            item['_id'] = item['arc-id']
 
             hier_items = item['hierarchy']['hierarchy-item']
             for hi in hier_items:
@@ -102,6 +102,14 @@ def process_arc_all(profile):
                 hid = hi['hierarchy-item-id']
 
                 if hid not in collections:
+                    # Grab series information from item
+                    coll = {}
+                    coll['id'] = hid
+                    coll['label'] = hi['hierarchy-item-title']
+                    coll['items'] = []
+                    collections[hid] = coll
+
+                    """
                     # Parse the series/collection file
                     try:
                         hier_rf = ARC_RELATED_FILE(root,htype,hid)
@@ -125,8 +133,9 @@ def process_arc_all(profile):
                     coll['label'] = hier.get('title','')
                     coll['items'] = []
                     collections[cid] = coll
+                    """
                 else:
-                    coll = collections[cid]
+                    coll = collections[hid]
 
                 coll['items'].append(item)
 
@@ -134,8 +143,7 @@ def process_arc_all(profile):
             items.append(item)
 
     for cid in collections:
-        # FIXME need way to pass in the label
-        enrich_coll(profile,cid,json.dumps({'items':collections[cid]['items']}))
+        enrich_coll(profile,cid,json.dumps(collections[cid]))
 
 def enrich_coll(profile,subr,content):
     # Enrich retrieved data
