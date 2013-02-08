@@ -163,7 +163,7 @@ def process_oai_coll(profile,subr):
 
     request_more, resumption_token = True, ""
     while request_more:
-        endpoint = profile[u'endpoint_URL'] + subr
+        endpoint = profile[u'endpoint_URL'] + (subr if subr != profile[u'name'] else "")
         if resumption_token:
             endpoint += '&' + urlencode({'resumption_token': resumption_token})
         print >> sys.stderr, endpoint
@@ -183,17 +183,21 @@ def process_oai_coll(profile,subr):
 def process_oai_all(profile,blacklist=[]):
     # Get all sets
     url = profile[u'list_sets']
-    resp, content = H.request(url)
-    if not resp[u'status'].startswith('2'):
-        print >> sys.stderr, ' HTTP error ('+resp[u'status']+') resolving URL: ' + url
-        return False 
+    if not url:
+        # No set, make generic
+        subResources = [profile[u'name']]
+    else:
+        resp, content = H.request(url)
+        if not resp[u'status'].startswith('2'):
+            print >> sys.stderr, ' HTTP error ('+resp[u'status']+') resolving URL: ' + url
+            return False 
 
-    sleep = profile.get(u'sleep',0)
-    set_content = json.loads(content)
-    subResources = []
-    for s in set_content:
-        if s[u'setSpec']:
-            subResources.append(s[u'setSpec'])
+        sleep = profile.get(u'sleep',0)
+        set_content = json.loads(content)
+        subResources = []
+        for s in set_content:
+            if s[u'setSpec']:
+                subResources.append(s[u'setSpec'])
 
     # Process the sets
     subr_to_process =[subr for subr in subResources if subr not in blacklist]
