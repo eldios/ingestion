@@ -2,8 +2,8 @@
     "enrichments_coll": [], 
     "name": "nara", 
     "enrichments_rec": [
-        "http://localhost:8889/select-id?prop=_id",
-        "http://localhost:8889/arc-to-dpla"
+        "http://localhost:8878/select-id?prop=_id",
+        "http://localhost:8878/arc-to-dpla"
     ], 
     "subresources": [], 
     "last_checked": "2013-01-22T01:22:38.714174", 
