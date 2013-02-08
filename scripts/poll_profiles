@@ -90,12 +90,13 @@ def process_arc_all(profile):
             item_fn = os.path.join(root,filename)
             item_f = open(item_fn,'r')
             item = ARC_PARSE(item_f)['archival-description']
+            item_f.close()
 
             # set our generic identifier property
             item['_id'] = item['arc-id']
 
             hier_items = item['hierarchy']['hierarchy-item']
-            for hi in hier_items:
+            for hi in (hier_items if isinstance(hier_items,list) else [hier_items]):
                 htype = hi['hierarchy-item-lod']
                 if not htype.lower() == 'series': continue # only interested in Series objects as collections
 
@@ -105,7 +106,7 @@ def process_arc_all(profile):
                     # Grab series information from item
                     coll = {}
                     coll['id'] = hid
-                    coll['label'] = hi['hierarchy-item-title']
+                    coll['title'] = hi['hierarchy-item-title']
                     coll['items'] = []
                     collections[hid] = coll
 
@@ -137,13 +138,29 @@ def process_arc_all(profile):
                 else:
                     coll = collections[hid]
 
-                coll['items'].append(item)
+                # Create tmp file to hold collections items
+                coll_fn = "/tmp/coll_%s" % coll['id']
+                coll_f = open(coll_fn,'a')
+                coll_f.write(str(item)+"\n")
+                coll_f.close()
+                #coll['items'].append(item)
 
             #print json.dumps(item,indent=4)
-            items.append(item)
+            #items.append(item)
 
     for cid in collections:
+        # Open tmp collection file and append items
+        coll_fn = "/tmp/coll_%s" % cid
+        coll_f = open(coll_fn, 'r')
+        for line in coll_f.readlines():
+            collections[cid]['items'].append(eval(line))
+        coll_f.close()
+        
         enrich_coll(profile,cid,json.dumps(collections[cid]))
+        # Remove items from collections so thhat the dictionary
+        # doesn't get large
+        del collections[cid]['items']
+        os.remove(coll_fn) 
 
 def enrich_coll(profile,subr,content):
     # Enrich retrieved data
