@@ -4,7 +4,6 @@
     "enrichments_rec": [
         "http://localhost:8878/select-id?prop=_id", 
         "http://localhost:8878/arc-to-dpla", 
-        "http://localhost:8878/spatial_dates_to_temporal", 
         "http://localhost:8878/shred?prop=subject%2Ctype%2Cformat&delim=%3b", 
         "http://localhost:8878/enrich-date?prop=created", 
         "http://localhost:8878/enrich-subject", 
@@ -13,11 +12,11 @@
         "http://localhost:8878/enrich_location"
     ], 
     "subresources": [], 
-    "last_checked": "2013-02-08T14:43:05.296099", 
+    "last_checked": "2013-02-09T00:37:28.755549", 
     "contributor": {
         "@id": "http://dp.la/api/contributor/nara", 
         "name": "National Archives"
     }, 
     "type": "arc", 
-    "endpoint_URL": "file:/tmp/nara/"
+    "endpoint_URL": "file:/tmp/nara/test/"
 }
