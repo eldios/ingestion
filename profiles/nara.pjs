@@ -12,11 +12,11 @@
         "http://localhost:8878/enrich_location"
     ], 
     "subresources": [], 
-    "last_checked": "2013-02-09T00:37:28.755549", 
+    "last_checked": "2013-02-09T00:49:23.041303", 
     "contributor": {
         "@id": "http://dp.la/api/contributor/nara", 
         "name": "National Archives"
     }, 
     "type": "arc", 
-    "endpoint_URL": "file:/tmp/nara/test/"
+    "endpoint_URL": "file:/tmp/nara/"
 }

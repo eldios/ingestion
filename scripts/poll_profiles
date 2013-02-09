@@ -80,11 +80,10 @@ def process_arc_all(profile):
     assert src_URL.startswith('file:/') # assumes no authority and the non-broken use of //
     src_dir = src_URL[5:]
 
-    collections = {} # this could get big unless we can figure out a way to scope it
-    #TODO delete /tmp/coll_*
+    collections = {} 
+    os.system("rm /tmp/coll_*")
     print "Walking directory: "+src_dir
     for (root, dirs, files) in os.walk(src_dir):
-        items = []
         for filename in fnmatch.filter(files, 'Item_*.xml'):
             item_fn = os.path.join(root,filename)
             item_f = open(item_fn,'r')
@@ -108,45 +107,14 @@ def process_arc_all(profile):
                     coll['title'] = hi['hierarchy-item-title']
                     coll['items'] = []
                     collections[hid] = coll
-
-                    """
-                    # Parse the series/collection file
-                    try:
-                        hier_rf = ARC_RELATED_FILE(root,htype,hid)
-                        print "Related file: "+hier_rf
-                        hier_fname = glob.glob(hier_rf)[0]
-                        print "  Found as: "+hier_fname
-                        hier_f = open(hier_fname,'r')
-                    except Exception as e:
-                        print >> sys.stderr, "Couldn't find referenced Series file (%s) from %s"%((hier_fname,item_fn))
-                        print >> sys.stderr, repr(e)
-                        continue
-
-                    hier = ARC_PARSE(hier_f)['archival-description']
-                    hier_f.close()
-
-                    cid = hier['arc-id']
-                    #assert hid == cid, "Unexpected difference in ARC IDs between Item reference and retrieved Series"
-
-                    coll = {}
-                    coll['id'] = cid
-                    coll['label'] = hier.get('title','')
-                    coll['items'] = []
-                    collections[cid] = coll
-                    """
                 else:
                     coll = collections[hid]
 
                 # Create tmp file to hold collections items
                 coll_fn = "/tmp/coll_%s" % coll['id']
-                print >> sys.stderr, "Writing to %s" % coll_fn
                 coll_f = open(coll_fn,'a')
                 coll_f.write(str(item)+"\n")
                 coll_f.close()
-                #coll['items'].append(item)
-
-            #print json.dumps(item,indent=4)
-            #items.append(item)
 
     limit = 1000
     for cid in collections:
@@ -155,6 +123,7 @@ def process_arc_all(profile):
         coll_f = open(coll_fn, 'r')
         lines = coll_f.readlines()
         coll_f.close()
+        os.remove(coll_fn)
 
         i = 0
         for line in lines:
