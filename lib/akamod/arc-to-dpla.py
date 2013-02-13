@@ -17,22 +17,29 @@ GEOPROP = None
 CONTEXT = {
    "@vocab": "http://purl.org/dc/terms/",
    "dpla": "http://dp.la/terms/",
+   "edm": "http://www.europeana.eu/schemas/edm/",
+   "LCSH": "http://id.loc.gov/authorities/subjects",
    "name": "xsd:string",
-   "dplaContributor": "dpla:contributor",
-   "dplaSourceRecord": "dpla:sourceRecord",
-   "coordinates": "dpla:coordinates",
+   "collection" : "dpla:aggregation",
+   "aggregatedDigitalResource" : "dpla:aggregatedDigitalResource",
+   "originalRecord" : "dpla:originalRecord",
    "state": "dpla:state",                             
-   "start" : {
-     "@id" : "dpla:start",
+   "coordinates": "dpla:coordinates",
+   "stateLocatedIn" : "dpla:stateLocatedIn",
+   "aggregatedCHO" : "edm:aggregatedCHO",
+   "dataProvider" : "edm:dataProvider",
+   "hasView" : "edm:hasView",
+   "isShownAt" : "edm:isShownAt",
+   "object" : "edm:object",
+   "provider" : "edm:provider",
+   "begin" : {
+     "@id" : "dpla:dateRangeStart",     
      "@type": "xsd:date"
    },
    "end" : {
      "@id" : "dpla:end",
      "@type": "xsd:date"
-   },
-   "iso3166-2": "dpla:iso3166-2",
-   "iso639": "dpla:iso639",
-   "LCSH": "http://id.loc.gov/authorities/subjects"
+   }
 }
 
 def created_transform(d):
@@ -87,14 +94,6 @@ def source_transform(d):
             break
     return {"source":source}
 
-def subject_transform(d):
-    subject = []
-    for s in (d["subject"] if not isinstance(d["subject"],basestring) else [d["subject"]]):
-        subject.append({
-            "name" : s.strip()
-        })
-    return {"subject" : subject}
-
 def rights_transform(d):
     sections = []
     if 'use-restriction' in d:
@@ -110,6 +109,16 @@ def rights_transform(d):
         #    sections.append(sur)
 
     return {'rights': "; ".join(filter(None,sections))}
+
+def is_shown_at_transform(d):
+    object = "http://research.archives.gov/description/" + str(d["arc-id-desc"])
+    return {
+        "isShownAt" : {
+            "@id" : object,
+            "format" : d.get("format",None),
+            "rights" : d.get("rights",None)
+            }
+        }
 
 def arc_group_extraction(d,groupKey,itemKey,nameKey=None):
     """
@@ -155,27 +164,31 @@ def arc_group_extraction(d,groupKey,itemKey,nameKey=None):
 
 # Structure mapping the original top level property to a function returning a single
 # item dict representing the new property and its value
-TRANSFORMER = {
-    "contributor"      : lambda d: {"contributor": arc_group_extraction(d,'contributors','contributor','contributor-display')},
-    "parent"           : lambda d: {"source": getprop(d,"parent/parent-title")},
-    "original_record"  : lambda d: {"dplaSourceRecord": d.get("original_record",None)},
-    "coverage-dates"   : created_transform,
-    "title"            : lambda d: {"title": d.get("title-only")},
-    "creators"         : lambda d: {'creator': arc_group_extraction(d,'creators','creator','creator-display')},
-    "publisher"        : lambda d: {'publisher': arc_group_extraction(d,'reference-units','reference-unit','name')},
-    "type"             : lambda d: {'type': arc_group_extraction(d,'general-records-types','general-records-type','general-records-type-desc')},
-    "format"           : lambda d: {'format': arc_group_extraction(d,'media-occurences','media-occurence','media-type')},
-    "description"      : lambda d: {"description": d.get("title")},
-    "id"               : lambda d: {"id": d.get("id"), "@id" : "http://dp.la/api/items/"+d.get("id","")},
-    "use-restriction"  : rights_transform,
-    "collection"       : lambda d: {"isPartOf": d.get("collection")},
-    "subject"          : subject_transform,
-    "ingestType"       : lambda d: {"ingestType": d.get("ingestType")},
-    "ingestDate"       : lambda d: {"ingestDate": d.get("ingestDate")},
-    "_id"              : lambda d: {"_id": d.get("_id")}
+CHO_TRANSFORMER = {
+    "contributor"           : lambda d: {"contributor": arc_group_extraction(d,'contributors','contributor','contributor-display')},
+    "coverage-dates"        : created_transform,
+    "title"                 : lambda d: {"title": d.get("title-only")},
+    "creators"              : lambda d: {'creator': arc_group_extraction(d,'creators','creator','creator-display')},
+    "publisher"             : lambda d: {'publisher': arc_group_extraction(d,'reference-units','reference-unit','name')},
+    "general-records-types" : lambda d: {'type': arc_group_extraction(d,'general-records-types','general-records-type','general-records-type-desc')},
+    "format"                : lambda d: {'format': arc_group_extraction(d,'media-occurences','media-occurence','media-type')},
+    "scope-content-note"    : lambda d: {'description': d.get("scope-content-note")}, 
+    "use-restriction"       : rights_transform,
+    "subject-references"    : lambda d: {'subject': arc_group_extraction(d,'subject-references','subject-reference','display-name')}
 
     # language - needs a lookup table/service. TBD.
     # subject - needs additional LCSH enrichment. just names for now
+}
+
+AGGREGATION_TRANSFORMER = {
+    "collection"       : lambda d: {"collection": d.get("collection",None)},
+    "id"               : lambda d: {"id": d.get("id"), "@id" : "http://dp.la/api/items/"+d.get("id","")},
+    "_id"              : lambda d: {"_id": d.get("_id")},
+    "originalRecord"   : lambda d: {"originalRecord": d.get("originalRecord",None)},
+    "ingestType"       : lambda d: {"ingestType": d.get("ingestType")},
+    "ingestDate"       : lambda d: {"ingestDate": d.get("ingestDate")},
+    "arc-id-desc"      : is_shown_at_transform
+    #"parent"           : lambda d: {"dataProvider": getprop(d,"parent/parent-title")}
 }
 
 @simple_service('POST', 'http://purl.org/la/dp/arc-to-dpla', 'arc-to-dpla', 'application/ld+json')
@@ -198,21 +211,24 @@ def arctodpla(body,ctype,geoprop=None):
 
     out = {
         "@context": CONTEXT,
+        "aggregatedCHO": {}
     }
 
     # For ARC, "data" is the source record so set it here
-    data["original_record"] = deepcopy(data)
+    data["originalRecord"] = deepcopy(data)
 
     # Apply all transformation rules from original document
     for p in data.keys():
-        if p in TRANSFORMER:
-            out.update(TRANSFORMER[p](data))
+        if p in CHO_TRANSFORMER:
+            out['aggregatedCHO'].update(CHO_TRANSFORMER[p](data))
+        if p in AGGREGATION_TRANSFORMER:
+            out.update(AGGREGATION_TRANSFORMER[p](data))
 
     # Additional content not from original document
 
     if 'HTTP_CONTRIBUTOR' in request.environ:
         try:
-            out["dplaContributor"] = json.loads(base64.b64decode(request.environ['HTTP_CONTRIBUTOR']))
+            out["provider"] = json.loads(base64.b64decode(request.environ['HTTP_CONTRIBUTOR']))
         except Exception as e:
             logger.debug("Unable to decode Contributor header value: "+request.environ['HTTP_CONTRIBUTOR']+"---"+repr(e))
 
