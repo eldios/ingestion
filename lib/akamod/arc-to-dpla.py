@@ -120,6 +120,31 @@ def is_shown_at_transform(d):
             }
         }
 
+def has_view_transform(d,groupKey,itemKey):
+    # Get hasView, if it already exists
+    data = d.get("hasView",[])
+
+    format = None
+    rights = d.get("rights",None)
+
+    if groupKey == "objects":
+        format = arc_group_extraction(d,groupKey,itemKey,"mime-type")
+        urlKey = "file-url"
+    if groupKey == "online-resources":
+        urlKey = "online-resource-url"
+
+    url = arc_group_extraction(d,groupKey,itemKey,urlKey)
+
+    for i in range(0,len(url)):
+        data.append({
+            "url": url[i],
+            "rights": rights,
+            "format": format[i] if format else ""
+        })
+
+    return data
+
+
 def arc_group_extraction(d,groupKey,itemKey,nameKey=None):
     """
     Generalization of what proved to be an idiom in ARC information extraction,
@@ -175,8 +200,9 @@ CHO_TRANSFORMER = {
     "format"                : lambda d: {'format': arc_group_extraction(d,'media-occurences','media-occurence','media-type')},
     "scope-content-note"    : lambda d: {'description': d.get("scope-content-note")}, 
     "use-restriction"       : rights_transform,
-    "subject-references"    : lambda d: {'subject': arc_group_extraction(d,'subject-references','subject-reference','display-name')}
-
+    "subject-references"    : lambda d: {'subject': arc_group_extraction(d,'subject-references','subject-reference','display-name')},
+    "objects"               : lambda d: {'hasView': has_view_transform(d,'objects','object')},
+    "online-resources"      : lambda d: {'hasView': has_view_transform(d,'online-resources','online-resource')}
     # language - needs a lookup table/service. TBD.
     # subject - needs additional LCSH enrichment. just names for now
 }
