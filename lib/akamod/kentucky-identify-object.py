@@ -6,8 +6,8 @@ from amara.thirdparty import json
 from dplaingestion.selector import getprop, setprop, exists
 
 
-@simple_service('POST', 'http://purl.org/la/dp/identify_preview_location',
-    'kentucky-identify-object', 'application/json')
+@simple_service('POST', 'http://purl.org/la/dp/kentucky_identify_object',
+    'kentucky_identify_object', 'application/json')
 def kentucky_identify_object(body, ctype, rights_field="aggregatedCHO/rights", download="True"):
     """
     Responsible for: adding a field to a document with the URL where we
@@ -20,7 +20,6 @@ def kentucky_identify_object(body, ctype, rights_field="aggregatedCHO/rights", d
         if LOG_JSON_ON_ERROR:
             logger.debug(body)
 
-    logger.debug(body)
     data = {}
     try:
         data = json.loads(body)
@@ -56,9 +55,7 @@ def kentucky_identify_object(body, ctype, rights_field="aggregatedCHO/rights", d
         response.add_header('content-type', 'text/plain')
         return msg
 
-    ob = {"@id": thumb_url, "format": "", "rights": rights}
-
-    data["object"] = ob
+    data["object"] = {"@id": thumb_url, "format": "", "rights": rights}
 
     status = "ignore"
     if download == "True":
@@ -69,5 +66,4 @@ def kentucky_identify_object(body, ctype, rights_field="aggregatedCHO/rights", d
     else:
         data["admin"] = {"object_status": status}
 
-    logger.debug("Thumbnail URL = " + thumb_url)
     return json.dumps(data)

@@ -12,7 +12,7 @@
         "http://localhost:8878/enrich-type", 
         "http://localhost:8878/enrich-format", 
         "http://localhost:8878/enrich_location",
-        "http://localhost:8878/kentucky-identify-object"
+        "http://localhost:8878/kentucky_identify_object"
     ], 
     "subresources": [], 
     "last_checked": "2013-02-08T02:07:44.804283", 
