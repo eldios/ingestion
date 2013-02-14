@@ -153,20 +153,13 @@ def arc_group_extraction(d,groupKey,itemKey,nameKey=None):
 
         subitem = item.get(itemKey)
         if not isinstance(subitem,basestring):
-            logger.debug("SUBITEM: " + str(subitem))
             for s in (subitem if isinstance(subitem,list) else [subitem]):
                 if nameKey:
-                    data.append({
-                        "name": s.get(nameKey,None)
-                    })
+                    data.append(s.get(nameKey,None))
                 else:
-                    data.append({
-                        "name": s
-                    })
+                    data.append(s)
         else:
-            data.append({
-                "name": subitem
-            })
+            data.append(subitem)
 
     return data
 

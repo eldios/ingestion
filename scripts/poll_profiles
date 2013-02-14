@@ -75,7 +75,7 @@ ARC_PARSE = lambda doc: xmltodict.parse(doc,xml_attribs=True,attr_prefix='',forc
 #    return key, data
 #
 #ARC_PARSE = lambda doc: xmltodict.parse(doc,xml_attribs=True,attr_prefix='',postprocessor=skip_cdata)
-def process_arc_all(profile):
+def process_arc_all(profile,blacklist=None):
     src_URL = profile.get('endpoint_URL')
     assert src_URL.startswith('file:/') # assumes no authority and the non-broken use of //
     src_dir = src_URL[5:]

@@ -21,8 +21,8 @@ def enrichtype(body,ctype,action="enrich-type", prop="aggregatedCHO/type", alter
     """
 
     REGEXPS = ('images','image'), ('still image','image')
-    DC_TYPES = ['collection', 'dataset', 'event', 'image', 'still image', 'interactive resource', 'model', 'party', 'physical object',
-                'place', 'service', 'software', 'sound', 'text']
+    DC_TYPES = ['collection', 'dataset', 'event', 'image', 'still image', 'moving image', 'interactive resource', 'model', 'party',
+                'physical object', 'place', 'service', 'software', 'sound', 'text']
 
     def cleanup(s):
         s = s.lower().strip()
@@ -42,6 +42,7 @@ def enrichtype(body,ctype,action="enrich-type", prop="aggregatedCHO/type", alter
 
     if exists(data,prop):
         v = getprop(data,prop)
+        logger.debug("TYPE:" + str(v))
         dctype = []
         physicalFormat = list(getprop(data,alternate)) if exists(data,alternate) else []
 
