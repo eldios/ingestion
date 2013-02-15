@@ -30,26 +30,21 @@ def kentucky_identify_object(body, ctype, rights_field="aggregatedCHO/rights", d
         response.add_header('content-type', 'text/plain')
         return msg
 
-    url = None
-    try:
-        url = getprop(data, "aggregatedCHO/relation")
-        logger.debug("Found URL: " + url)
-    except KeyError as e:
-        msg = e.args[0]
+    relation_field = "aggregatedCHO/relation"
+    if exists(data, relation_field):
+        url = getprop(data, relation_field)
+    else:
+        msg = "Field %s does not exist" % relation_field
         logger.error(msg)
         return body
 
     base_url, ext = os.path.splitext(url)  
-
-    # Thumb url field.
     thumb_url = "%s_tb%s" % (base_url, ext)
 
-    # Get the rights field
-    rights = None
-    try:
+    if exists(data, rights_field):
         rights = getprop(data, rights_field)
-    except KeyError as e:
-        msg = e.args[0]
+    else:
+        msg = "Field %s does not exist" % rights_field
         logger.error(msg)
         response.code = 500
         response.add_header('content-type', 'text/plain')
