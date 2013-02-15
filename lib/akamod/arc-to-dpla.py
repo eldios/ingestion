@@ -120,25 +120,19 @@ def is_shown_at_transform(d):
             }
         }
 
-def has_view_transform(d,groupKey,itemKey):
-    # Get hasView, if it already exists
-    data = d.get("hasView",[])
+def has_view_transform(d,groupKey,itemKey,urlKey,formatKey=None):
+    data = []
 
     format = None
-    rights = d.get("rights",None)
-
-    if groupKey == "objects":
-        format = arc_group_extraction(d,groupKey,itemKey,"mime-type")
-        urlKey = "file-url"
-    if groupKey == "online-resources":
-        urlKey = "online-resource-url"
+    if formatKey:
+        format = arc_group_extraction(d,groupKey,itemKey,formatKey)
 
     url = arc_group_extraction(d,groupKey,itemKey,urlKey)
 
     for i in range(0,len(url)):
         data.append({
             "url": url[i],
-            "rights": rights,
+            "rights": "",
             "format": format[i] if format else ""
         })
 
@@ -201,8 +195,8 @@ CHO_TRANSFORMER = {
     "scope-content-note"    : lambda d: {'description': d.get("scope-content-note")}, 
     "use-restriction"       : rights_transform,
     "subject-references"    : lambda d: {'subject': arc_group_extraction(d,'subject-references','subject-reference','display-name')},
-    "objects"               : lambda d: {'hasView': has_view_transform(d,'objects','object')},
-    "online-resources"      : lambda d: {'hasView': has_view_transform(d,'online-resources','online-resource')}
+    "objects"               : lambda d: {'hasView': has_view_transform(d,'objects','object','file-url','mime-type')},
+    "online-resources"      : lambda d: {'hasView': has_view_transform(d,'online-resources','online-resource','online-resource-url')}
     # language - needs a lookup table/service. TBD.
     # subject - needs additional LCSH enrichment. just names for now
 }
