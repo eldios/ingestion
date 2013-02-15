@@ -44,14 +44,9 @@ def kentucky_identify_object(body, ctype, rights_field="aggregatedCHO/rights", d
     base_url, ext = os.path.splitext(url)  
     thumb_url = "%s_tb%s" % (base_url, ext)
 
+    rights = None
     if exists(data, rights_field):
         rights = getprop(data, rights_field)
-    else:
-        msg = "Field %s does not exist" % rights_field
-        logger.error(msg)
-        response.code = 500
-        response.add_header('content-type', 'text/plain')
-        return msg
 
     data["object"] = {"@id": thumb_url, "format": "", "rights": rights}
 

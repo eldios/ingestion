@@ -21,7 +21,6 @@ def contentdm_identify_object(body, ctype, rights_field="aggregatedCHO/rights", 
         if LOG_JSON_ON_ERROR:
             logger.debug(body)
 
-    logger.debug(body)
     data = {}
     try:
         data = json.loads(body)
@@ -32,12 +31,11 @@ def contentdm_identify_object(body, ctype, rights_field="aggregatedCHO/rights", 
         response.add_header('content-type', 'text/plain')
         return msg
 
-    url = None
-    try:
-        url = getprop(data, "originalRecord/handle")[1]
-        logger.debug("Found URL: " + url)
-    except KeyError as e:
-        msg = e.args[0]
+    handle_field = "originalRecord/handle"
+    if exists(data, handle_field):
+        url = getprop(data, handle_field)[1]
+    else:
+        msg = "Field %s does not exist" % handle_field
         logger.error(msg)
         return body
 
@@ -68,20 +66,11 @@ def contentdm_identify_object(body, ctype, rights_field="aggregatedCHO/rights", 
         (base_url, p[0], p[1])
 
     # Gettings the rights field
-
     rights = None
-    try:
+    if exists(data, rights_field):
         rights = getprop(data, rights_field)
-    except KeyError as e:
-        msg = e.args[0]
-        logger.error(msg)
-        response.code = 500
-        response.add_header('content-type', 'text/plain')
-        return msg
 
-    ob = {"@id": thumb_url, "format": "", "rights": rights}
-
-    data["object"] = ob
+    data["object"] = {"@id": thumb_url, "format": "", "rights": rights}
 
     status = IGNORE
     if download == "True":
@@ -92,5 +81,4 @@ def contentdm_identify_object(body, ctype, rights_field="aggregatedCHO/rights", 
     else:
         data["admin"] = {"object_status": status}
 
-    logger.debug("Thumbnail URL = " + thumb_url)
     return json.dumps(data)
