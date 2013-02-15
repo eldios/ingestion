@@ -4,7 +4,13 @@ from akara import response
 from akara.services import simple_service
 from amara.thirdparty import json
 from dplaingestion.selector import getprop, setprop, exists
+from akara import module_config
 
+
+IGNORE = module_config().get('IGNORE')
+PENDING = module_config().get('PENDING')
+
+logger.debug("!!!KENTUCKY!!! IGNORE={0} PENDING={1}".format(IGNORE, PENDING))
 
 @simple_service('POST', 'http://purl.org/la/dp/kentucky_identify_object',
     'kentucky_identify_object', 'application/json')
