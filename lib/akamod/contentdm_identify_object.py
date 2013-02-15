@@ -4,9 +4,11 @@ from akara.services import simple_service
 from amara.thirdparty import json
 from dplaingestion.selector import getprop, setprop, exists
 
+IGNORE = module_config().get('IGNORE')
+PENDING = module_config().get('PENDING')
 
-@simple_service('POST', 'http://purl.org/la/dp/identify_preview_location',
-    'contentdm-identify-object', 'application/json')
+@simple_service('POST', 'http://purl.org/la/dp/contentdm_identify_object',
+    'contentdm_identify_object', 'application/json')
 def contentdm_identify_object(body, ctype, rights_field="aggregatedCHO/rights", download="True"):
     """
     Responsible for: adding a field to a document with the URL where we
@@ -81,9 +83,9 @@ def contentdm_identify_object(body, ctype, rights_field="aggregatedCHO/rights", 
 
     data["object"] = ob
 
-    status = "ignore"
+    status = IGNORE
     if download == "True":
-        status = "pending"
+        status = PENDING
 
     if "admin" in data:
         data["admin"]["object_status"] = status
