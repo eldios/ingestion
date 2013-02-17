@@ -120,24 +120,35 @@ def is_shown_at_transform(d):
             }
         }
 
-def has_view_transform(d,groupKey,itemKey,urlKey,formatKey=None):
-    data = []
+def has_view_transform(d):
+    has_view = []
 
-    format = None
-    if formatKey:
+    def add_views(has_view,rge,url,format=None):
+        for i in range(0,rge):
+            has_view.append({
+                "url": url[i],
+                "rights": "",
+                "format": format[i] if format else ""
+            })
+        return has_view
+
+    if "objects" in d:
+        groupKey = "objects"
+        itemKey = "object"
+        urlKey = "file-url"
+        formatKey = "mime-type"
+        url = arc_group_extraction(d,groupKey,itemKey,urlKey)
         format = arc_group_extraction(d,groupKey,itemKey,formatKey)
+        has_view = add_views(has_view,len(url),url,format)
 
-    url = arc_group_extraction(d,groupKey,itemKey,urlKey)
+    if "online-resources" in d:
+        groupKey = "online-resources"
+        itemKey = "online-resource"
+        urlKey = "online-resource-url"
+        url = arc_group_extraction(d,groupKey,itemKey,urlKey)
+        has_view = add_views(has_view,len(url),url)
 
-    for i in range(0,len(url)):
-        data.append({
-            "url": url[i],
-            "rights": "",
-            "format": format[i] if format else ""
-        })
-
-    return data
-
+    return {"hasView": has_view}
 
 def arc_group_extraction(d,groupKey,itemKey,nameKey=None):
     """
@@ -195,8 +206,8 @@ CHO_TRANSFORMER = {
     "scope-content-note"    : lambda d: {'description': d.get("scope-content-note")}, 
     "use-restriction"       : rights_transform,
     "subject-references"    : lambda d: {'subject': arc_group_extraction(d,'subject-references','subject-reference','display-name')},
-    "objects"               : lambda d: {'hasView': has_view_transform(d,'objects','object','file-url','mime-type')},
-    "online-resources"      : lambda d: {'hasView': has_view_transform(d,'online-resources','online-resource','online-resource-url')}
+    "objects"               : has_view_transform,
+    "online-resources"      : has_view_transform
     # language - needs a lookup table/service. TBD.
     # subject - needs additional LCSH enrichment. just names for now
 }
