@@ -116,7 +116,7 @@ def is_shown_at_transform(d):
         "isShownAt" : {
             "@id" : object,
             "format" : d.get("format",None),
-            "rights" : d.get("rights",None)
+            "rights" : "" 
             }
         }
 

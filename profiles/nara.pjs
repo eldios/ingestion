@@ -9,7 +9,8 @@
         "http://localhost:8878/enrich-subject", 
         "http://localhost:8878/enrich-type", 
         "http://localhost:8878/enrich-format", 
-        "http://localhost:8878/enrich_location"
+        "http://localhost:8878/enrich_location",
+        "http://localhost:8878/copy_rights"
     ], 
     "subresources": [], 
     "last_checked": "2013-02-09T00:49:23.041303", 

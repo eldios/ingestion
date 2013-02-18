@@ -91,7 +91,8 @@ MODULES = [
     "dplaingestion.akamod.artstor-select-isshownat",
     "dplaingestion.akamod.artstor_preview_location",
     "dplaingestion.akamod.spatial_dates_to_temporal",
-    "dplaingestion.akamod.enrich_location"
+    "dplaingestion.akamod.enrich_location",
+    "dplaingestion.akamod.copy_rights"
     ]
 
 class download_preview:
