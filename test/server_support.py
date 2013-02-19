@@ -92,7 +92,8 @@ MODULES = [
     "dplaingestion.akamod.artstor_preview_location",
     "dplaingestion.akamod.spatial_dates_to_temporal",
     "dplaingestion.akamod.enrich_location",
-    "dplaingestion.akamod.lookup"
+    "dplaingestion.akamod.lookup",
+    "dplaingestion.akamod.bhl_contributor_to_collection"
     ]
 
 class download_preview:
