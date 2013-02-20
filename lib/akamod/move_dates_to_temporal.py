@@ -20,10 +20,9 @@ def movedatestotemporal(body,ctype,action="move_dates_to_temporal",prop=None):
     REGMATCHES = [" *\d{4}", "( *\d{1,4} *[-/]){2} *\d{1,4}"]
 
     def cleanup(s):
-        s = s.strip()
         for pattern, replace in REGSUBS:
             s = re.sub(pattern, replace, s)
-        return s
+        return s.strip()
 
     try:
         data = json.loads(body)
@@ -41,6 +40,8 @@ def movedatestotemporal(body,ctype,action="move_dates_to_temporal",prop=None):
             name = cleanup(d["name"])
             for pattern in REGMATCHES:
                 if re.match(pattern, name):
+                    # If there's a match, let's save the cleaned up value
+                    d["name"] = name
                     temporal.append(d)
                     break
             if d not in temporal:
