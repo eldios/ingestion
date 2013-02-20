@@ -72,7 +72,6 @@ MODULES = [
     "freemix_akara.contentdm",
     "freemix_akara.oai",
     "dplaingestion.oai",
-    "zen.akamod.geocoding",
     "dplaingestion.akamod.enrich",
     "dplaingestion.akamod.enrich-subject",
     "dplaingestion.akamod.enrich-type",
@@ -90,7 +89,7 @@ MODULES = [
     "dplaingestion.akamod.filter-empty-values",
     "dplaingestion.akamod.artstor-select-isshownat",
     "dplaingestion.akamod.artstor_preview_location",
-    "dplaingestion.akamod.spatial_dates_to_temporal",
+    "dplaingestion.akamod.move_dates_to_temporal",
     "dplaingestion.akamod.enrich_location",
     "dplaingestion.akamod.lookup",
     "dplaingestion.akamod.bhl_contributor_to_collection"
