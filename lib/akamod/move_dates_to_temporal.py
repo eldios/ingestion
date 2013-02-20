@@ -16,12 +16,12 @@ def movedatestotemporal(body,ctype,action="move_dates_to_temporal",prop=None):
         logger.error("No prop supplied")
         return body
 
-    REGSUBS = ("\(", ""), ("\)", "")
-    REGMATCHES = [" *\d{4}", "( *\d{1,4} *[-/]){2} *\d{1,4}"]
+    REGSUB = ("\(", ""), ("\)", "")
+    REGSEARCH = ["(\( *)?(\d{1,4} *[-/] *\d{1,4} *[-/] *\d{1,4})( *\))?", "(\( *)?(\d{4} *[-/] *\d{4})( *\))?", "(\( *)?(\d{4})( *\))?"]
 
     def cleanup(s):
-        for pattern, replace in REGSUBS:
-            s = re.sub(pattern, replace, s)
+        for p,r in REGSUB:
+            s = re.sub(p,r,s)
         return s.strip()
 
     try:
@@ -37,14 +37,15 @@ def movedatestotemporal(body,ctype,action="move_dates_to_temporal",prop=None):
         temporal = getprop(data, temporal_field) if exists(data, temporal_field) else []
 
         for d in getprop(data, prop):
-            name = cleanup(d["name"])
-            for pattern in REGMATCHES:
-                if re.match(pattern, name):
-                    # If there's a match, let's save the cleaned up value
-                    d["name"] = name
-                    temporal.append(d)
-                    break
-            if d not in temporal:
+            for regsearch in REGSEARCH:
+                pattern = re.compile(regsearch)
+                for match in pattern.findall(d["name"]):
+                    m = "".join(match)
+                    #TODO (\( *)? matches 0 and produces '' in m
+                    if m:
+                        d["name"] = re.sub(re.escape(m),"",d["name"])
+                        temporal.append({"name": cleanup(m)})
+            if d["name"].strip():
                 # Append to p, which will overwrite data[prop]
                 p.append(d)
 

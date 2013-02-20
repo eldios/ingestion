@@ -40,7 +40,7 @@ def test_move_dates_to_temporal_spatial1():
                 {"name": "1901-1999"},
                 {"name": " 1901 - 1999 "},
                 {"name": "1901 - 01 - 01"},
-                {"name": " 1901 / 01 / 01"},
+                {"name": " 1901 / 01 / 01 "},
                 {"name": "1905-04-12"},
                 {"name": "01/01/1901"},
                 {"name": "01 - 01 - 1901"},
@@ -129,6 +129,7 @@ def test_move_dates_to_temporal_subject1():
                 {"name": "1901-1999"},
                 {"name": "1901"},
                 {"name": " (1902) "},
+                {"name": "United States--History--Civil War, 1861-1865--Soldiers--Pictorial works."},
                 {"name": "subject1"}
             ]
         }
@@ -139,9 +140,13 @@ def test_move_dates_to_temporal_subject1():
                 {"name": "1901-1999"},
                 {"name": "1901-1999"},
                 {"name": "1901"},
-                {"name": "1902"}
+                {"name": "1902"},
+                {"name": "1861-1865"}
             ],
-            "subject" : [{"name": "subject1"}]
+            "subject" : [
+                {"name": "United States--History--Civil War, --Soldiers--Pictorial works."},
+                {"name": "subject1"}
+            ]
         }
     }
  
@@ -151,7 +156,7 @@ def test_move_dates_to_temporal_subject1():
 
 def test_move_dates_to_temporal_subject2():
     """
-    Should not change subjectl nor add temporal.
+    Should not change subject nor add temporal.
     """
     prop = "aggregatedCHO/subject"
     INPUT = {
