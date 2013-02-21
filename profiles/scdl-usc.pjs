@@ -15,7 +15,8 @@
         "http://localhost:8875/enrich-type", 
         "http://localhost:8875/enrich-format", 
         "http://localhost:8875/contentdm_identify_object",
-        "http://localhost:8875/enrich_location"
+        "http://localhost:8875/enrich_location",
+        "http://localhost:8875/copy_prop?prop=aggregatedCHO/publisher&to_prop=dataProvider&create=True"
     ], 
     "subresources": [ ], 
     "last_checked": "2013-01-25T13:46:52.158314", 

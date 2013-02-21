@@ -15,7 +15,8 @@
         "http://localhost:8878/enrich-type",
         "http://localhost:8878/enrich-format",
         "http://localhost:8878/enrich_location",
-        "http://localhost:8878/bhl_contributor_to_collection"
+        "http://localhost:8878/bhl_contributor_to_collection",
+        "http://localhost:8878/copy_prop?prop=aggregatedCHO/contributor&to_prop=dataProvider&create=True"
     ], 
     "subresources": [
         "item",
