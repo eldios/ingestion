@@ -35,6 +35,7 @@ def copyprop(body,ctype,prop=None,to_prop=None,create=False,key=None):
                         setprop(to_element[i], key, val)
                     else:
                         msg = "Key %s does not exist in %s" % (key, to_prop)
+                        logger.error(msg)
                 else:
                     setprop(data, to_element[i], val)
 
