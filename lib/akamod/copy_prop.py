@@ -18,7 +18,7 @@ def copyprop(body,ctype,prop=None,to_prop=None,create=False,key=None):
         response.add_header('content-type', 'text/plain')
         return "Unable to parse body as JSON"
 
-    if create and not exists(data, to_prop):
+    if exists(data, prop) and create and not exists(data, to_prop):
         setprop(data, to_prop, "")
 
     if exists(data, prop) and exists(data, to_prop):
