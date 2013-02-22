@@ -14,6 +14,7 @@
         "http://localhost:8875/enrich-subject", 
         "http://localhost:8875/move_dates_to_temporal?prop=aggregatedCHO%2Fsubject",
         "http://localhost:8875/move_dates_to_temporal?prop=aggregatedCHO%2Fspatial",
+        "http://localhost:8875/enrich-temporal-date",
         "http://localhost:8875/enrich-type", 
         "http://localhost:8875/enrich-format", 
         "http://localhost:8875/contentdm_identify_object",
