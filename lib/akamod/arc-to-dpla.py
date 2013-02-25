@@ -42,24 +42,29 @@ CONTEXT = {
    }
 }
 
-def created_transform(d):
-    covdates = d.get("coverage-dates")
-    if not covdates:
-        created = None
+def date_transform(d,groupkey,itemKey):
+    date = {}
+    if isinstance(itemKey,list):
+        date["begin"] = arc_group_extraction(groupKey,itemKey[0])
+        date["end"] = arc_group_extraction(groupKey,itemKey[1])
+        date["displayDate"] = date["begin"]
     else:
-        start = covdates.get('cov-start-date')
-        end = covdates.get('cov-end-date')
-        created = {}
-        if start:
-            created['start'] = start
-        if end:
-            created['end'] = end
+        date["displayDate"] = arc_group_extraction(group,itemKey)
+        date["begin"] = date["displayDate"]
+        date["end"] = date["displayDate"]
 
-        if not start and not end:
-            created = None
+    return {"date": date}
 
-    return {"created": created}
+def is_part_of_transform(d):
+    is_part_of = []
+    hiers = ['series','file unit']
+    hierarchy = getprop(d, hierarchy)
+    for hier in hierarchy:
+        if hier["hierarchy-item-lod"].lower() in hiers:
+            is_part_of.append({"name": hier["hierarchy-item-title"]})
 
+    return {"isPartOf": is_part_of}
+            
 def temporal_transform(d):
     temporal = []
 
@@ -74,7 +79,7 @@ def temporal_transform(d):
         else:
             logger.debug("Could not parse date: " + t)
 
-    # Then, check out the 'coverage' field, since dates may be there
+    # Then, check out the "coverage" field, since dates may be there
     if "coverage" in d:
         for t in (d["coverage"] if not isinstance(d["coverage"],basestring) else [d["coverage"]]):
             a,b = parse_date_or_range(t)
@@ -95,10 +100,14 @@ def source_transform(d):
     return {"source":source}
 
 def rights_transform(d):
-    sections = []
-    if 'use-restriction' in d:
-        sections.append(getprop(d,"use-restriction/use-status",keyErrorAsNone=True))
-        sections.append(getprop(d,"use-restriction/use-note",keyErrorAsNone=True))
+    rights = []
+
+    if "access-restriction" in d:
+        rights.append({"name": getprop(d,"access-restriction/restriction-status",keyErrorAsNone=True)})
+    if "use-restriction" in d:
+        rights.append({"name": getprop(d,"use-restriction/use-status",keyErrorAsNone=True)})
+        #sections.append(getprop(d,"use-restriction/use-status",keyErrorAsNone=True))
+        #sections.append(getprop(d,"use-restriction/use-note",keyErrorAsNone=True))
 
         # FIXME unclear on the structure of this section, and rarely used so defer for now
         #surs = getprop(d,"use-restriction/specific-use-restrictions",keyErrorAsNone=True)
@@ -108,7 +117,8 @@ def rights_transform(d):
         #else:
         #    sections.append(sur)
 
-    return {'rights': "; ".join(filter(None,sections))}
+    #return {"rights": "; ".join(filter(None,sections))}
+    return {"rights": rights}
 
 def is_shown_at_transform(d):
     object = "http://research.archives.gov/description/" + str(d["arc-id-desc"])
@@ -161,9 +171,9 @@ def arc_group_extraction(d,groupKey,itemKey,nameKey=None):
       </general-records-type>
     </general-records-types>
 
-    'groupKey' is the name of the containing property, e.g. "creators"
-    'itemKey' is the name of the contained property, e.g. "creator"
-    'nameKey' is the property of the itemKey-named resource to be extracted
+    "groupKey" is the name of the containing property, e.g. "creators"
+    "itemKey" is the name of the contained property, e.g. "creator"
+    "nameKey" is the property of the itemKey-named resource to be extracted
       if present, otherwise the value of the nameKey property
     """
     group = d.get(groupKey)
@@ -196,20 +206,25 @@ def arc_group_extraction(d,groupKey,itemKey,nameKey=None):
 # Structure mapping the original top level property to a function returning a single
 # item dict representing the new property and its value
 CHO_TRANSFORMER = {
-    "contributor"           : lambda d: {"contributor": arc_group_extraction(d,'contributors','contributor','contributor-display')},
-    "coverage-dates"        : created_transform,
-    "title"                 : lambda d: {"title": d.get("title-only")},
-    "creators"              : lambda d: {'creator': arc_group_extraction(d,'creators','creator','creator-display')},
-    "publisher"             : lambda d: {'publisher': arc_group_extraction(d,'reference-units','reference-unit','name')},
-    "general-records-types" : lambda d: {'type': arc_group_extraction(d,'general-records-types','general-records-type','general-records-type-desc')},
-    "format"                : lambda d: {'format': arc_group_extraction(d,'media-occurences','media-occurence','media-type')},
-    "scope-content-note"    : lambda d: {'description': d.get("scope-content-note")}, 
+    "contributor"           : lambda d: {"contributor": arc_group_extraction(d,"contributors","contributor","contributor-display")},
+    "creators"              : lambda d: {"creator": arc_group_extraction(d,"creators","creator","creator-display")},
+    "release-dates"         : dates_transform(d,"release-dates","release-date"),
+    "broadcast-dates"       : dates_transform(d,"broadcast-dates","broadcast-date"),
+    "production-dates"      : dates_transform(d,"production-dates","production-date"), 
+    "coverage-dates"        : dates_transform(d,"coverage-dates",["cov-start-date","cov-end-date"]),
+    "copyright-dates"       : dates_transform(d,"copyright-dates","copyright-date"),
+    "scope-content-note"    : lambda d: {"description": d.get("scope-content-note")}, 
+    "languages"             : lambda d: {"language": arc_group_extraction(d,"languages","language")}, # needs a lookup table/service. TBD.
+    "format"                : lambda d: {"format": arc_group_extraction(d,"media-occurences","media-occurence","media-type")},
+    "general-records-types" : lambda d: {"type": arc_group_extraction(d,"general-records-types","general-records-type","general-records-type-desc")},
+    #"publisher"            : lambda d: {"publisher": arc_group_extraction(d,"reference-units","reference-unit","name")},
+    "hierarchy"             : is_part_of_transform,
+    "access-restriction"    : rights_transform,
     "use-restriction"       : rights_transform,
-    "subject-references"    : lambda d: {'subject': arc_group_extraction(d,'subject-references','subject-reference','display-name')},
+    "subject-references"    : lambda d: {"subject": arc_group_extraction(d,"subject-references","subject-reference","display-name")}, # needs additional LCSH enrichment
+    "title"                 : lambda d: {"title": d.get("title-only")},
     "objects"               : has_view_transform,
     "online-resources"      : has_view_transform
-    # language - needs a lookup table/service. TBD.
-    # subject - needs additional LCSH enrichment. just names for now
 }
 
 AGGREGATION_TRANSFORMER = {
@@ -223,19 +238,19 @@ AGGREGATION_TRANSFORMER = {
     #"parent"           : lambda d: {"dataProvider": getprop(d,"parent/parent-title")}
 }
 
-@simple_service('POST', 'http://purl.org/la/dp/arc-to-dpla', 'arc-to-dpla', 'application/ld+json')
+@simple_service("POST", "http://purl.org/la/dp/arc-to-dpla", "arc-to-dpla", "application/ld+json")
 def arctodpla(body,ctype,geoprop=None):
-    '''   
+    """   
     Convert output of JSON-ified ARC (NARA) format into the DPLA JSON-LD format.
 
     Parameter "geoprop" specifies the property name containing lat/long coords
-    '''
+    """
 
     try :
         data = json.loads(body)
     except:
         response.code = 500
-        response.add_header('content-type','text/plain')
+        response.add_header("content-type","text/plain")
         return "Unable to parse body as JSON"
 
     global GEOPROP
@@ -252,17 +267,17 @@ def arctodpla(body,ctype,geoprop=None):
     # Apply all transformation rules from original document
     for p in data.keys():
         if p in CHO_TRANSFORMER:
-            out['aggregatedCHO'].update(CHO_TRANSFORMER[p](data))
+            out["aggregatedCHO"].update(CHO_TRANSFORMER[p](data))
         if p in AGGREGATION_TRANSFORMER:
             out.update(AGGREGATION_TRANSFORMER[p](data))
 
     # Additional content not from original document
 
-    if 'HTTP_CONTRIBUTOR' in request.environ:
+    if "HTTP_CONTRIBUTOR" in request.environ:
         try:
-            out["provider"] = json.loads(base64.b64decode(request.environ['HTTP_CONTRIBUTOR']))
+            out["provider"] = json.loads(base64.b64decode(request.environ["HTTP_CONTRIBUTOR"]))
         except Exception as e:
-            logger.debug("Unable to decode Contributor header value: "+request.environ['HTTP_CONTRIBUTOR']+"---"+repr(e))
+            logger.debug("Unable to decode Contributor header value: "+request.environ["HTTP_CONTRIBUTOR"]+"---"+repr(e))
 
     # Strip out keys with None/null values?
     out = dict((k,v) for (k,v) in out.items() if v)
